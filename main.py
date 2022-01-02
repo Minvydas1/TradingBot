@@ -5,7 +5,6 @@ import requests
 from binance.client import Client
 from binance.enums import *
 import config
-import pushbullet
 from currency_converter import CurrencyConverter
 from keep_alive import keep_alive
 import os
@@ -24,16 +23,8 @@ TRADE_SYMBOL = 'BTCUSDT'
 PARAMS_SYMBOL = 'BTC/USDT'
 INTERVAL = '15m'
 PERCENT = 1
-POSITIVE_PERCENT = 0.5
-p = False
-NEGATIVE_PERCENT = -1
-n1 = False
-NEGATIVE_PERCENT2 = -3
-n2 = False
-NEGATIVE_PERCENT3 = -5
-n3 = False
-NEGATIVE_PERCENT4 = -10
-n4 = False
+
+
 
 client = Client(config.API_KEY, config.API_SECRET)
 
@@ -41,8 +32,6 @@ closes = []
 
 #Variables for database
 date_format = 'dd/mm/yy hh:mm'
-
-pb = pushbullet.PushBullet(config.API_PUSH)
 
 c = CurrencyConverter()
 
@@ -71,7 +60,6 @@ def on_message(ws, message):
     global closes, row, p, n1, n2, n3, n4, in_position
 
     json_message = json.loads(message)
-    pprint.pprint(json_message)
 
     candle = json_message['k']
 
@@ -197,9 +185,7 @@ def on_message(ws, message):
                     euro = round(euro_profit, 2)
                     print("Profit in euro: {}€".format(euro))
 
-                    #PUSHING NOTIFICATION
-                    pb.push_note('SELL order filled', 'Crypto was sold for: {}% profit'.format(tax))
-
+                    #GETTING INFO FOR TABLE IN WEB
                     date_time = datetime.now()
                     x = date_time.strftime("%Y-%m-%d")
 
@@ -209,49 +195,7 @@ def on_message(ws, message):
                     db["profit/loss"] = "Profit"
                 else:
                     print("SELL ORDER did not succeed!")
-
-        #INFORMING ABOUT POSITION 
-        if percent >= POSITIVE_PERCENT:
-            if p == False:
-                pb.push_note('Crypto price RAISING', '0.5%')
-                p = True
-        elif percent <= NEGATIVE_PERCENT:
-            if n1 == False:
-                pb.push_note('Crypto price DROPPING', '-1%')
-                n1 = True
-
-                p = False
-                n2 = False
-                n3 = False
-                n4 = False
-        elif percent <= NEGATIVE_PERCENT2:
-            if n2 == False:
-                pb.push_note('Crypto price DROPPING','-3%')
-                n2 = True
-
-                p = False
-                n1 = False
-                n3 = False
-                n4 = False
-        elif percent <= NEGATIVE_PERCENT3:
-            if n3 == False:
-                pb.push_note('Crypto price DROPPING','-5%')
-                n3 = True
-
-                p = False
-                n1 = False
-                n2 = False
-                n4 = False
-        elif percent <= NEGATIVE_PERCENT4:
-            if n4 == False:
-                pb.push_note('Crypto price DROPPING','-10%')
-                n4 = True
-
-                p = False
-                n1 = False
-                n2 = False
-                n3 = False
-    
+  
     else:
         print("YOU ARE NOT IN THE POSITION")
     
